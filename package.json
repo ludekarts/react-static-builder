@@ -1,5 +1,5 @@
 {
-  "name": "@ludekarts/react-static-builder",
+  "name": "react-static-builder",
   "version": "0.1.0-alpha.1",
   "description": "Static site builder for React web applications",
   "main": "dist/index.js",
