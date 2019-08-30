@@ -1,0 +1,43 @@
+{
+  "name": "@ludekarts/react-static-builder",
+  "version": "0.1.0-alpha.1",
+  "description": "Static site builder for React web applications",
+  "main": "dist/index.js",
+  "bin": {
+    "@ludekarts/react-static-builder": "bin/react-static-builder.js",
+    "react-static-builder": "bin/react-static-builder.js"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "webpack --config webpack.config.babel.js --mode production",
+    "gen": "babel src/modules/generator.js -d dist",
+    "watch": "webpack --config webpack.config.babel.js --mode development --watch"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": [],
+  "author": "Wojciech Ludwin @ludekarts <ludekarts@gmail.com>",
+  "license": "ISC",
+  "dependencies": {
+    "esm": "^3.2.25",
+    "serialize-javascript": "^1.8.0",
+    "webpack": "^4.39.2"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.5.5",
+    "@babel/core": "^7.5.5",
+    "@babel/plugin-proposal-class-properties": "^7.5.5",
+    "@babel/plugin-syntax-dynamic-import": "^7.2.0",
+    "@babel/plugin-transform-runtime": "^7.5.5",
+    "@babel/preset-env": "^7.5.5",
+    "@babel/preset-react": "^7.0.0",
+    "@babel/register": "^7.5.5",
+    "@babel/runtime": "^7.5.5",
+    "babel-loader": "^8.0.6",
+    "react": "^16.9.0",
+    "react-dom": "^16.9.0",
+    "webpack-cli": "^3.3.5",
+    "webpack-dev-server": "^3.7.2"
+  }
+}

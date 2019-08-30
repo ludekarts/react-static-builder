@@ -1,0 +1,10 @@
+{
+  "entries": {
+    "static": "./static.js",
+    "dynamic": "./index.js"
+  },
+  "output": "static",
+  "basepath": null,
+  "suspense": 100000,
+  "config": "src/static-routes.js"
+}

@@ -1,0 +1,6 @@
+export default async function staticRoutes() {
+  // All pre-fething goes here . . .
+  return [
+    // Routes objects goes here . . .
+  ];
+}
