@@ -3,8 +3,10 @@ import ReactDOM from "react-dom";
 import staticRoutes from "staticRoutes";
 import DatatProvider from "./data-provider";
 
+export const isBrowser = typeof document !== "undefined";
+
 export default async function render(application, id) {
-  if (typeof document !== "undefined") {
+  if (isBrowser) {
     const target = document.getElementById(id);
     if (target.hasChildNodes()) {
       ReactDOM.hydrate(<DatatProvider>{application}</DatatProvider>, target);

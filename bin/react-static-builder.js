@@ -6,6 +6,7 @@ require = require("esm")(module);
 const fs = require("fs");
 const path = require("path");
 const promisify = require("util").promisify;
+const exec = promisify(require("child_process").exec);
 
 const access = promisify(fs.access);
 const readFile = promisify(fs.readFile);
@@ -30,6 +31,7 @@ async function initialize() {
   
   const rcConfig = await readFile(path.resolve(`${__dirname}/templates/rc-config.tmp`));
   const routesConfig = await readFile(path.resolve(`${__dirname}/templates/routes-config.tmp`));
+  const staticjsConfig = await readFile(path.resolve(`${__dirname}/templates/staticjs-config.tmp`));
 
   try {        
     // Read package.json.
@@ -46,6 +48,15 @@ async function initialize() {
 
     await writeFile(path.resolve("./package.json"), JSON.stringify(packageJson, null, 2), "utf8"); 
 
+    // Detect if rimraf exiest, if not install it.
+    if (!packageJson.devDependencies.rimraf && !packageJson.dependencies.rimraf) {
+      try {
+        await exec("npm i -D rimraf");        
+      } catch (error) {
+        console.error(error);   
+      }      
+    }
+
     // Create .staticrc file.
     try {
       await access(".staticrc", fs.constants.R_OK);
@@ -60,6 +71,14 @@ async function initialize() {
       console.error(`File "static-routes.js" already exist. Step skipped.`); 
     } catch (error) {
       await writeFile("./src/static-routes.js", routesConfig, "utf8"); 
+    }
+
+     // Create static.js file.
+     try {
+      await access("./src/static.js", fs.constants.R_OK);
+      console.error(`File "static.js" already exist. Step skipped.`); 
+    } catch (error) {
+      await writeFile("./src/static.js", staticjsConfig, "utf8"); 
     }
 
   } catch (error) {
@@ -85,7 +104,7 @@ async function build() {
   // ---- Set global variables for the generator ----------------
 
   global.window = global.window || {};   
-  global.rsbStaticrc = staticRcConfig; 
+  global.staticrc = staticRcConfig; 
   global.staticRoutes = require(`${currentDirectory}/${staticRcConfig.config}`).default;
   
   // Get build script name.

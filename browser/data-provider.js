@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext, createContext }  from "react";
+import React, { useState, useEffect, useContext, useMemo , createContext }  from "react";
 
 // Create Data Context.
 const DataContext = createContext();
@@ -11,9 +11,10 @@ const MODE = {
 };
 
 // Hook for any component that wants to access static data.
-export function useRouteData(path) {
+export function useRouteData(path) {  
   const { routesData, fetchData, include } = useContext(DataContext);
-  const url = path.slice(1);
+  // Remove trailing slash. 
+  const url = /\/$/.test(path) ? path.slice(0, -1) : path;
   include && include(url);
   return routesData[url] || fetchData(url);
 };
@@ -42,12 +43,15 @@ export default function DataProvider(props) {
   // Set url that requests data.
   const [url, fetchData] = useState();
 
+  // Conext object.
+  const context = useMemo(() => ({ routesData, fetchData, include }), [routesData]);
+  
   // List of available data queries.
   const dataQueries =
     mode === MODE.DEVELOPMENT ? routeToQuery(staticRoutes) : {};
 
   // Data fetching logic.
-  useEffect(() => {
+  useEffect(() => {    
     mode === MODE.PRODUCTION
       ? url && fetchLocalData(addRouteData)
       : typeof dataQueries[url] === "function" &&
@@ -55,7 +59,7 @@ export default function DataProvider(props) {
   }, [url]);
 
   return (
-    <DataContext.Provider value={{ routesData, fetchData, include }}>
+    <DataContext.Provider value={context}>
       {children}
     </DataContext.Provider>
   );

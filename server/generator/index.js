@@ -5,28 +5,23 @@ const path = require("path");
 // Serializer.
 const serialize = require("serialize-javascript");
 
-// Data provider.
-const DataProvider = require("./dist").DataProvider;
-
 // Initialize generator.
-async function generateStaticRoutes (staticRender) {
-  
-  // React.
-  const React = require("react");
-  const renderToString = require("react-dom/server").renderToString;
-  const renderToStaticMarkup = require("react-dom/server").renderToStaticMarkup;
-    
-  console.log(rsbStaticrc, staticRoutes);
+async function generateStaticRoutes (staticRender) {   
 
+  // Dependencies.
+  const React = require("react");  
+  const DataProvider = require("../../lib").DataProvider;
+  const renderToString = require("react-dom/server").renderToString;
+  const renderToStaticMarkup = require("react-dom/server").renderToStaticMarkup;  
 
   // Check for React Static Builder Global Configuration.
-  if (!rsbStaticrc) throw new Error("Cannot access '.staticrc' configuration");
+  if (!staticrc) throw new Error("Cannot access '.staticrc' configuration");
   if (!staticRoutes) throw new Error("Cannot access staticRoutes");
 
   // Prepeare static routes.
   const routes = await staticRoutes();
   // Get global configuration.
-  const { output, basepath } = rsbStaticrc;
+  const { output, basepath } = staticrc;
   // Extract data queries from routes.
   const dataQueries = routes.map(route =>
     route.getData ? route.getData() : Promise.resolve()
@@ -66,7 +61,9 @@ async function generateStaticRoutes (staticRender) {
     routes.map(async currentRoute => {
       const includes = {};
       const scriptData = [];
-      const currentPath = currentRoute.path;
+      const currentPath = /\/$/.test(currentRoute.path) 
+        ? currentRoute.path.slice(0, -1) // Always remove trailing slash. 
+        : currentRoute.path;
 
       const generator = {
         routeData: generatorData[currentPath],
@@ -90,10 +87,9 @@ async function generateStaticRoutes (staticRender) {
       };
 
       // Create route's absolute path.
-      const file =
-        currentPath === "/"
+      const file = (currentPath === "/"
           ? `${output}/index.html`
-          : `${output}/${currentPath}/index.html`;
+          : `${output}/${currentPath}/index.html`).replace(/\/+/g, "/");
 
       // Get static markup.
       const staticMarkup = staticRender(currentPath, generator);
@@ -113,7 +109,7 @@ async function generateStaticRoutes (staticRender) {
               return acc;
             }, {}),
             { isJSON: true }
-          )
+          ).replace(/\\u002F/g, "/")
         : undefined;
 
       // Create route's index file.
@@ -204,8 +200,6 @@ function rmdir(source) {
   fs.rmdirSync(source);
 }
 
-
-
 // Export.
-module.exports.generateStaticRoutes = generateStaticRoutes;
+module.exports = generateStaticRoutes;
   

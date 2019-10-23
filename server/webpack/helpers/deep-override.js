@@ -98,4 +98,4 @@ function canBeCopied(object) {
   );
 }
 
-module.exports.deepOverride = deepOverride;
+module.exports = deepOverride;

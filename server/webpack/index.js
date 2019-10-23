@@ -1,8 +1,9 @@
 const fs = require("fs");
 const path = require("path");
 const webpack = require("webpack");
-const plugins = require( "./modules/plugins");
-const deepOverride = require( "./helpers/deep-override").deepOverride;
+const plugins = require( "./plugins");
+const deepCopy = require( "./helpers/deep-copy");
+const deepOverride = require( "./helpers/deep-override");
 
 function webpackConfig(config) {
   return function(env, argv) {
@@ -55,7 +56,7 @@ function webpackConfig(config) {
       },
       plugins: [
         new webpack.DefinePlugin({
-          rsbStaticrc: JSON.stringify(staticrc)
+          staticrc: JSON.stringify(staticrc)
         }),
         rsbAwait && rsbAwait.length
           ? new SuspenseBuild(() => rsbAwait.every(file => fs.existsSync(file)), suspenseTimeout)
@@ -81,7 +82,7 @@ function webpackConfig(config) {
       },
       plugins: [
         new webpack.DefinePlugin({
-          rsbStaticrc: JSON.stringify(staticrc)
+          staticrc: JSON.stringify(staticrc)
         })
       ]
     });
@@ -91,7 +92,7 @@ function webpackConfig(config) {
       webpackConfig: webpackConfig,
       plugins: [
         new webpack.DefinePlugin({
-          rsbStaticrc: JSON.stringify({})
+          staticrc: JSON.stringify({})
         })
       ]
     });
@@ -162,46 +163,6 @@ function getStaticRcConfig() {
   }
 }
 
-function deepCopy(object) {
-  return Object.keys(object).reduce((acc, key) => {
-    const value = object[key];
-    if (canBeCopied(value)) {
-      acc[key] = value;
-    } else if (Array.isArray(value)) {
-      acc[key] = deepArray(value);
-    } else {
-      acc[key] =
-        value instanceof RegExp
-          ? RegExp(value.source, value.flags)
-          : deepCopy(value);
-    }
-    return acc;
-  }, {});
-}
-
-function canBeCopied(object) {
-  return (
-    object === null ||
-    object === undefined ||
-    typeof object === "boolean" ||
-    (object &&
-      object.constructor &&
-      !["Object", "RegExp", "Array"].includes(object.constructor.name))
-  );
-}
-
-function deepArray(array) {
-  return array.map(item => {
-    if (canBeCopied(item)) {
-      return item;
-    } else if (Array.isArray(item)) {
-      return deepArray(item);
-    } else {
-      return deepCopy(item);
-    }
-  });
-}
-
 function cutBaseSlashes(basepath) {
   if (!basepath) return "";
   basepath = /^\//.test(basepath) ? basepath.slice(1) : basepath;
@@ -210,4 +171,4 @@ function cutBaseSlashes(basepath) {
 }
 
 // Export.
-module.exports.webpackConfig = webpackConfig;
+module.exports = webpackConfig;

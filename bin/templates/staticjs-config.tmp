@@ -1,0 +1,30 @@
+// React.
+import React from "react";
+
+// Application.
+import Application from "./app";
+
+// Static utilities.
+import { generateStaticRoutes } from "react-static-builder/generator";
+
+// Render Static App.
+generateStaticRoutes((currentRoute, generator) => {
+
+  // Genderate Application HTML.
+  const html = generator.html(<Application />);
+
+  // Render HTML markup.
+  return (
+    <html lang="pl">
+      <head>
+        <meta charSet="UTF-8" />          
+        <meta name="viewport" content="width=device-width, initial-scale=1" />          
+        <title>Hello App!</title>          
+      </head>
+      <body>
+        <div id="app">{generator.include(html)}</div>          
+      </body>
+    </html>
+  );
+});
+

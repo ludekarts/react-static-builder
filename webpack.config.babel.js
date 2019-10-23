@@ -8,7 +8,7 @@ export default {
     filename: "index.js",
     libraryTarget: "umd",
     library: "react-static-builder",
-    path: path.resolve(__dirname, "./dist"),
+    path: path.resolve(__dirname, "./lib"),
   },
 
   externals : {
@@ -17,7 +17,7 @@ export default {
     "staticRoutes": "staticRoutes"    
   },
 
-  context: path.resolve(__dirname, "src"),
+  context: path.resolve(__dirname, "browser"),
 
   module: {
     rules: [
