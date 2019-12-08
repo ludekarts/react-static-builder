@@ -21,7 +21,7 @@
   "license": "ISC",
   "dependencies": {
     "esm": "^3.2.25",
-    "serialize-javascript": "^1.9.1",
+    "serialize-javascript": "^2.1.1",
     "webpack": "^4.41.2"
   },
   "devDependencies": {
