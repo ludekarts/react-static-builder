@@ -19,7 +19,7 @@ async function generateStaticRoutes (staticRender) {
   if (!staticRoutes) throw new Error("Cannot access staticRoutes");
 
   // Prepeare static routes.
-  const routes = await staticRoutes();
+  const routes = await staticRoutes();  
   // Get global configuration.
   const { output, basepath } = staticrc;
   // Extract data queries from routes.
@@ -33,9 +33,7 @@ async function generateStaticRoutes (staticRender) {
   // Assembling data with routes.
   const { routesData, generatorData } = routes.reduce(
     (acc, route, index) => {
-      // Add basepath if exist.
-      if (basepath) route.path = `${basepath}/${route.path}`;
-
+      
       // Cut out getData from configutarion - at this point it is useless.
       const { getData, ...config } = route;
 
@@ -56,25 +54,26 @@ async function generateStaticRoutes (staticRender) {
   );
 
   console.log("Rendering files...");
-
   await Promise.all(
     routes.map(async currentRoute => {
       const includes = {};
       const scriptData = [];
-      const currentPath = /\/$/.test(currentRoute.path) 
-        ? currentRoute.path.slice(0, -1) // Always remove trailing slash. 
-        : currentRoute.path;
-
+      const currentPath = noTrailingSlash(currentRoute.path);
+  
+      // Generator object provided to "generateStaticRoutes". 
       const generator = {
-        routeData: generatorData[currentPath],
 
-        // If "basepath" provided preppend script's src attribute with "/".
+        // Data for currently render route.
+        routeData: generatorData[currentPath],
+        
+        // Include given "content" into dinbal HTML.
         include: content => {
           const id = `__%RSB__INCLUDE__${uid()}%__`;
           includes[id] = content;
           return id;
         },
 
+        // Render HTML string from given React children.
         html: children => {
           return renderToString(
             React.createElement(DataProvider, {
@@ -87,9 +86,11 @@ async function generateStaticRoutes (staticRender) {
       };
 
       // Create route's absolute path.
-      const file = (currentPath === "/"
-          ? `${output}/index.html`
-          : `${output}/${currentPath}/index.html`).replace(/\/+/g, "/");
+      const file = useSingleSlash(
+        currentPath === "/"
+          ? `${output}/${basepath || ""}/index.html`
+          : `${output}/${basepath || ""}/${currentPath}/index.html`
+        );
 
       // Get static markup.
       const staticMarkup = staticRender(currentPath, generator);
@@ -103,34 +104,27 @@ async function generateStaticRoutes (staticRender) {
       );
 
       const routeData = scriptData.length
-        ? serialize(
-            scriptData.reduce((acc, route) => {
-              acc[route] = routesData[route];
-              return acc;
-            }, {}),
-            { isJSON: true }
-          ).replace(/\\u002F/g, "/")
+        ? useSingleSlash(
+            serialize(
+              scriptData.reduce((acc, route) => {
+                acc[route] = routesData[route];
+                return acc;
+              }, {}),
+              { isJSON: true }
+            )
+          )
         : undefined;
 
-      // Create route's index file.
-      const saveIndex = await createFile(
-        file,
-        insertMainScript(
-          addComponentData(html, routeData),
-          basepath ? `/${basepath}/` : "/"
-        )
+      // Create route's index file.      
+      console.log(
+        await createFile(file, addComponentData(html, routeData))
       );
 
-      console.log(saveIndex);
-
       // Create route's data file.
-      if (routeData) {
-        const saveJson = await createFile(
-          file.replace("index.html", "routeData.json"),
-          routeData
-        );
-        console.log(saveJson);
-      }
+      routeData &&
+        console.log(
+          await createFile( file.replace("index.html", "routeData.json"), routeData)
+        );      
     })
   );
 
@@ -173,17 +167,6 @@ function addComponentData(html, data) {
   }
 }
 
-function insertMainScript(html, relativePath) {
-  if (html.includes("</body>")) {
-    return html.replace(
-      "</body>",
-      `<script src="${relativePath}index.js"></script></body>`
-    );
-  } else {
-    return (html += `<script src="${relativePath}index.js"></script>`);
-  }
-}
-
 function uid() {
   return (+new Date() + Math.random() * 100).toString(32);
 }
@@ -198,6 +181,14 @@ function rmdir(source) {
       : rmdir(filePath);
   });
   fs.rmdirSync(source);
+}
+
+function useSingleSlash(path) {
+  return path.replace(/(\\u002F|\/+)/g, "/");
+}
+
+function noTrailingSlash(path) {
+  return path.length > 1 && /\/$/.test(path) ? path.slice(0, -1) : path;
 }
 
 // Export.

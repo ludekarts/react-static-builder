@@ -29,7 +29,7 @@ function webpackConfig(config) {
     // Webpack mode & configuration.
     const mode = env && env.prod;
     const webpackConfig =
-      typeof config === "function" ? config.call(this, env, argv) : config;
+      typeof config === "function" ? config.call(this, env, argv, staticrc) : config;
 
     // Extract files to await.
     const rsbAwait = webpackConfig.rsbAwait;
@@ -163,11 +163,8 @@ function getStaticRcConfig() {
   }
 }
 
-function cutBaseSlashes(basepath) {
-  if (!basepath) return "";
-  basepath = /^\//.test(basepath) ? basepath.slice(1) : basepath;
-  basepath = /\/$/.test(basepath) ? basepath.slice(0, -1) : basepath;
-  return basepath;
+function cutBaseSlashes(basepath) {  
+  return basepath ? basepath.replace(/(^\/|\/$)/, "") : "";
 }
 
 // Export.
