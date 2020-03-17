@@ -1,6 +1,6 @@
 {
   "name": "react-static-builder",
-  "version": "0.1.0-alpha.2",
+  "version": "0.1.0-alpha.3",
   "description": "Static site builder for React web applications",
   "main": "lib/index.js",
   "bin": {
