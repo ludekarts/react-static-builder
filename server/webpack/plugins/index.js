@@ -34,17 +34,19 @@ function SuspenseBuild(predicate, maxSuspenseTime = 20000) {
 }
 
 // ExecAfterBuild Plugin.
-function ExecuteAfterBuild(command) {
+function ExecuteAfterBuild(command, verbose = false) {
   this.command = command;
   return {
     apply: compiler => {
       if (compiler.hooks && this.command) {
         const plugin = { name: "ExecuteAfterBuild" };
-        compiler.hooks.done.tapAsync(plugin, (compilation, callback) => {          
+        compiler.hooks.done.tapAsync(plugin, (compilation, callback) => {
           exec(this.command, (error, stdout, stderr) => {
-            error instanceof Error
-              ? console.error(error)
-              : console.log(stdout, stderr);
+            if (error instanceof Error) {
+              console.error(error);
+            } else if (verbose) {
+              console.log(stdout, stderr);
+            }
             callback();
           });
         });

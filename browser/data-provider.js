@@ -11,12 +11,18 @@ const MODE = {
 };
 
 // Hook for any component that wants to access static data.
-export function useRouteData(path) {  
+export function useRouteData(path) {
   const { routesData, fetchData, include } = useContext(DataContext);
-  // Remove trailing slash. 
+  // Remove trailing slash.
   const url = /\/$/.test(path) ? path.slice(0, -1) : path;
   include && include(url);
-  return routesData[url] || fetchData(url);
+  const data = routesData[url];
+
+  useEffect(() => {
+    !data && fetchData(url);
+  }, [data, url]);
+
+  return data;
 };
 
 // Export Data Provider.
@@ -45,13 +51,13 @@ export default function DataProvider(props) {
 
   // Conext object.
   const context = useMemo(() => ({ routesData, fetchData, include }), [routesData]);
-  
+
   // List of available data queries.
   const dataQueries =
     mode === MODE.DEVELOPMENT ? routeToQuery(staticRoutes) : {};
 
   // Data fetching logic.
-  useEffect(() => {    
+  useEffect(() => {
     mode === MODE.PRODUCTION
       ? url && fetchLocalData(addRouteData)
       : typeof dataQueries[url] === "function" &&
