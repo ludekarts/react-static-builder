@@ -1,16 +1,16 @@
-![react-static-builder-logo](./src/assets/rsb-logo.png)
+![react-static-builder-logo](bin/assets/rsb-logo.png)
 
 # React Static Builder
 Static site builder for React web applications
 
-## Ussage 
+## Ussage
 This library currently support only Webpack, in the future we intend to extend also to Rollup and possibly other vendors.
 
 ### Command Line Interface (CLI)
 React static builder (RSB) by default installs as a CLI tool. It main purpose is to set up structure for the static build and later on bootsratap and build static application.
 
 To inintialize RSB type in yous comand line `react-static-builder init`. This command does three things:
- 1. Create statup files: 
+ 1. Create statup files:
     - `.staticrc` file which contains default setup for the static render.
     - `src/static-routes.js` file where you can put configuration for all static routes in your app.
     - `src/static.js` file with initial template to start with.
@@ -22,7 +22,7 @@ Static render is fairly easy in it principles, however sometimes setting it up c
 
 ### Basic concept
 ------------------------
-Lest start with the **basic setup**, that assumes you don't need any additional configuration, just deafults that RSB provides you out of the box. 
+Lest start with the **basic setup**, that assumes you don't need any additional configuration, just deafults that RSB provides you out of the box.
 
 1. Install RSB: `npm i -D react-static-builder`.
 2. Initialize RSB: `react-static-builder init`.
@@ -30,7 +30,7 @@ Lest start with the **basic setup**, that assumes you don't need any additional 
     ```
     import { webpackConfig } from "react-static-builder/server";
     . . .
-    
+
     export default webpackConfig((env, { mode }) => {
       return {
         // Your regular config goes here.
@@ -42,7 +42,7 @@ Lest start with the **basic setup**, that assumes you don't need any additional 
     import Application from "./app";
     import { render } from "react-static-builder";
     . . .
-    
+
     render(<Application/>, "app");
     ```
 5. Open `src/static-routes.js` file and add root route for your app:
@@ -73,9 +73,14 @@ To be honest, static render without routing is not as much fun as it can be, so 
     import { render } from "react-static-builder";
     import { BrowserRouter } from "react-router-dom";
     . . .
-    
-    render(<BrowserRouter><Application/></BrowserRouter>, "app");
-    ``` 
+
+    render(
+      <BrowserRouter>
+        <Application/>
+      </BrowserRouter>
+      , "app"
+    );
+    ```
 4. Simiraly in **static.js** wrap application component with `<StaticRouter />` component:
     ```
     . . .
@@ -96,7 +101,7 @@ To be honest, static render without routing is not as much fun as it can be, so 
     }
     ```
 6. Run `npm run static`. Files should be generated in **static** folder.
-    
+
 
 #### Dymaic content - fetching data
 The true power of static render is to populate app with data before it reach the users. RSB allows you to do that by using `static-routes.js` and `useRouteData` hook.
@@ -107,27 +112,27 @@ The true power of static render is to populate app with data before it reach the
     ```
     import fetch from "node-fetch";
     . . .
-    
-    export default async function staticRoutes() {  
+
+    export default async function staticRoutes() {
       return [
        // Other routers.
         {
           path: "/someview",
-          getData: () => fetch("https://...").then(r=>r.json()),      
+          getData: () => fetch("https://...").then(r=>r.json()),
         },
       ];
     }
     ```
-    
+
 4. In your view import two hooks: `useRouteMatch` from **react-router-dom** and `useRouteData` from RSB:
     ```
     import { useRouteMatch } from "react-router-dom";
     import { useRouteData } from "react-static-builder";
     . . .
-    
-    export default function Users(props) {    
-      const { url } = useRouteMatch();  
-      const users = useRouteData(url);  
+
+    export default function Users(props) {
+      const { url } = useRouteMatch();
+      const users = useRouteData(url);
       return ...
     }
     ```
@@ -146,31 +151,31 @@ You may have noticed that dispute tour app renders now statically you can see a 
     ```
     import { ServerStyleSheet, StyleSheetManager } from "styled-components";
     . . .
-    
+
     // Render Static App.
     generateStaticRoutes((currentRoute, generator) => {
         const sheet = new ServerStyleSheet();
         const html = generator.html(
-            <StyleSheetManager sheet={sheet.instance}>
-                <StaticRouter location={currentRoute}>
-                    <Application />
-                </StaticRouter>
-            </StyleSheetManager>
+          <StyleSheetManager sheet={sheet.instance}>
+            <StaticRouter location={currentRoute}>
+              <Application />
+            </StaticRouter>
+          </StyleSheetManager>
         );
         // Extract styles.
         const styles = sheet.getStyleTags();
         sheet.seal();
         // . . .
-        
+
         return (
-            <html>
-                <head>
-                    {generator.include(styles)}
-                </head>
-                <body>
-                    <div id="app">{generator.include(html)}</div>
-                </body>
-            </html>
+          <html>
+            <head>
+              {generator.include(styles)}
+            </head>
+            <body>
+              <div id="app">{generator.include(html)}</div>
+            </body>
+          </html>
         );
     });
     ```
@@ -186,12 +191,12 @@ The final step in our quest to become static-hero is code splitting. We'll use `
     ```
     import { loadableReady } from "@loadable/component";
     . . .
-    
+
     loadableReady(() => render(<App/>,"app"));
     ```
 3. Add `@loadable/babel-plugin` into your **plugins** config in `.babelrc` file.
 4. Add `LoadablePlugin` into **plugins** array in `webpack.config.js` file. It is important to set proper
-5. After that we need to replace components that should be lazy loaded with dynamic imports 
+5. After that we need to replace components that should be lazy loaded with dynamic imports
     ```
     const LazyComponent = loadable(() => import('./lazy-component'))
     ```
@@ -200,28 +205,27 @@ The final step in our quest to become static-hero is code splitting. We'll use `
     import { ChunkExtractor, ChunkExtractorManager } from "@loadable/server";
     . . .
 
-    generateStaticRoutes((currentRoute, generator) => {  
+    generateStaticRoutes((currentRoute, generator) => {
         const extractor = new ChunkExtractor({ statsFile: path.resolve("./static/loadable.json") })
-        
+
         const html = generator.html(
           <ChunkExtractorManager extractor={extractor}>
             <StaticRouter location={currentRoute} context={context}>
               <Application />
-            </StaticRouter>        
+            </StaticRouter>
           </ChunkExtractorManager>
         );
         const scripts = extractor.getScriptTags();
-       
+
         return (
-            <html lang="pl">
-                <head>
-                    {generator.include(scripts)}
-                </head>
-                <body>
-                    <div id="app">{generator.include(html)}</div>          
-                </body>
-            </html>
+          <html lang="pl">
+            <head>
+              {generator.include(scripts)}
+            </head>
+            <body>
+              <div id="app">{generator.include(html)}</div>
+            </body>
+          </html>
         );
     });
     ```
-7.

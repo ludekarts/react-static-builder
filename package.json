@@ -1,6 +1,6 @@
 {
   "name": "react-static-builder",
-  "version": "0.1.0-alpha.3",
+  "version": "0.1.0-alpha.4",
   "description": "Static site builder for React web applications",
   "main": "lib/index.js",
   "bin": {
@@ -10,7 +10,6 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "webpack --config webpack.config.babel.js --mode production",
-    "gen": "babel src/modules/generator.js -d dist",
     "watch": "webpack --config webpack.config.babel.js --mode development --watch"
   },
   "publishConfig": {
