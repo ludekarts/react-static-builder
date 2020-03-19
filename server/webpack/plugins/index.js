@@ -34,7 +34,7 @@ function SuspenseBuild(predicate, maxSuspenseTime = 20000) {
 }
 
 // ExecAfterBuild Plugin.
-function ExecuteAfterBuild(command, verbose = false) {
+function ExecuteAfterBuild(command, verbose = true) {
   this.command = command;
   return {
     apply: compiler => {
