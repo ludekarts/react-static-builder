@@ -96,35 +96,35 @@ To be honest, static render without routing is not as much fun as it can be, so 
       return [
         { path: "/"},
         { path: "/landing"},
-        // More paths here...
+        // More routes here...
       ];
     }
     ```
-6. Run `npm run static`. Files should be generated in **static** folder.
+6. Run `npm run static` task. Files should be generated in **static** folder.
 
 
 #### Dymaic content - fetching data
 The true power of static render is to populate app with data before it reach the users. RSB allows you to do that by using `static-routes.js` and `useRouteData` hook.
 
 1. Add another view to your app that requires some external data.
-2. Install `node-fetch` to your project. Data fetching logic need to be isomorphic.
-3. In `static-routes.js` add route matching one you've added to your app with `getData` method that will be responsible for providing data to the view:
+2. Install `node-fetch` into your project - data fetching logic need to be **isomorphic.
+3. In `static-routes.js` add another route that will match one you've added to your app. Declare `getData` method that will be responsible for providing data to the view. See below:
     ```
     import fetch from "node-fetch";
     . . .
 
     export default async function staticRoutes() {
       return [
-       // Other routers.
+        // Other routers.
         {
-          path: "/someview",
-          getData: () => fetch("https://...").then(r=>r.json()),
+          path: "/myNewView",
+          getData: () => fetch("https://api.com/data/for/my/new/view").then(r => r.json()),
         },
       ];
     }
     ```
 
-4. In your view import two hooks: `useRouteMatch` from **react-router-dom** and `useRouteData` from RSB:
+4. In your view import two hooks: `useRouteMatch` from **react-router-dom** and `useRouteData` from **react-static-builder**:
     ```
     import { useRouteMatch } from "react-router-dom";
     import { useRouteData } from "react-static-builder";
@@ -136,7 +136,23 @@ The true power of static render is to populate app with data before it reach the
       return ...
     }
     ```
- 5. And that's it. Now in any route or subroute you can use thees two hoks to call data required to render the view.
+5. And that's it. Now you can freely add more routes and subroutes and use these two hooks to call data required for render.
+
+6. *Additionally you can create a custom hook to make pulling data more easy:
+
+```
+// useRouteData.js
+
+import { useRouteMatch } from "react-router-dom";
+import { useRouteData } from "react-static-builder";
+
+export default function useCurrentRouteData() {
+  const { url } = useRouteMatch();
+  const data = useRouteData(url);
+  return data;
+};
+
+```
 
 
 #### Pulling out styles
@@ -154,29 +170,29 @@ You may have noticed that dispute tour app renders now statically you can see a 
 
     // Render Static App.
     generateStaticRoutes((currentRoute, generator) => {
-        const sheet = new ServerStyleSheet();
-        const html = generator.html(
-          <StyleSheetManager sheet={sheet.instance}>
-            <StaticRouter location={currentRoute}>
-              <Application />
-            </StaticRouter>
-          </StyleSheetManager>
-        );
-        // Extract styles.
-        const styles = sheet.getStyleTags();
-        sheet.seal();
-        // . . .
+      const sheet = new ServerStyleSheet();
+      const html = generator.html(
+        <StyleSheetManager sheet={sheet.instance}>
+          <StaticRouter location={currentRoute}>
+            <Application />
+          </StaticRouter>
+        </StyleSheetManager>
+      );
+      // Extract styles.
+      const styles = sheet.getStyleTags();
+      sheet.seal();
+      // . . .
 
-        return (
-          <html>
-            <head>
-              {generator.include(styles)}
-            </head>
-            <body>
-              <div id="app">{generator.include(html)}</div>
-            </body>
-          </html>
-        );
+      return (
+        <html>
+          <head>
+            {generator.include(styles)}
+          </head>
+          <body>
+            <div id="app">{generator.include(html)}</div>
+          </body>
+        </html>
+      );
     });
     ```
 
@@ -206,26 +222,39 @@ The final step in our quest to become static-hero is code splitting. We'll use `
     . . .
 
     generateStaticRoutes((currentRoute, generator) => {
-        const extractor = new ChunkExtractor({ statsFile: path.resolve("./static/loadable.json") })
+      const extractor = new ChunkExtractor({ statsFile: path.resolve("./static/loadable.json") })
 
-        const html = generator.html(
-          <ChunkExtractorManager extractor={extractor}>
-            <StaticRouter location={currentRoute} context={context}>
-              <Application />
-            </StaticRouter>
-          </ChunkExtractorManager>
-        );
-        const scripts = extractor.getScriptTags();
+      const html = generator.html(
+        <ChunkExtractorManager extractor={extractor}>
+          <StaticRouter location={currentRoute} context={context}>
+            <Application />
+          </StaticRouter>
+        </ChunkExtractorManager>
+      );
+      const scripts = extractor.getScriptTags();
 
-        return (
-          <html lang="pl">
-            <head>
-              {generator.include(scripts)}
-            </head>
-            <body>
-              <div id="app">{generator.include(html)}</div>
-            </body>
-          </html>
-        );
+      return (
+        <html lang="pl">
+          <head>
+            {generator.include(scripts)}
+          </head>
+          <body>
+            <div id="app">{generator.include(html)}</div>
+          </body>
+        </html>
+      );
     });
     ```
+
+---
+
+#### Using basepath
+
+Basepath is useful when you want to serve your app from a subdirectory e.g. https://myDomain.com/myStaticApp In order to achieve that you need to modify `.static` file and provide the **basepath** value. Best practice is to set it to the relative path starts in your domain's root directory. For *myDomain.com* it would be just `myStaticApp` assuming that app folder lies directly in root directory of your domain:
+```
+{
+  ...
+  "basepath": "myStaticApp",
+  ...
+}
+```

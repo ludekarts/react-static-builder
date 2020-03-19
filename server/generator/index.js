@@ -22,19 +22,32 @@ async function generateStaticRoutes (staticRender) {
   const routes = await staticRoutes();
   // Get global configuration.
   const { output, basepath } = staticrc;
+  // Normalize basepath.
+  const basePath = cutBaseSlashes(basepath);
   // Extract data queries from routes.
   const dataQueries = routes.map(route =>
     route.getData ? route.getData() : Promise.resolve()
   );
 
-  const results = await Promise.all(dataQueries);
+  let results;
+  console.log("⚒ Build process started");
+
+  try {
+    results = await Promise.all(dataQueries);
+  } catch (error) {
+    console.error(erorr);
+  }
+
   console.log("✔ Data fetched");
 
-  // Assembling data with routes.
+  // Colocate data with routes.
   const { routesData, generatorData } = routes.reduce(
     (acc, route, index) => {
 
-      // Cut out getData from configutarion - at this point it is useless.
+      // Extend current route path with basePath if one exist.
+      route.path = basePath ? `/${basePath}${route.path}` : route.path;
+
+      // Cut out getData from configutarion - at this point it's useless.
       const { getData, ...config } = route;
 
       // Data for the generator - static verions, access to full config.
@@ -49,11 +62,11 @@ async function generateStaticRoutes (staticRender) {
     },
     {
       routesData: {},
-      generatorData: {}
+      generatorData: {},
     }
   );
 
-
+  // Output ststistics.
   const stats = {
     renderedFiles: 0,
     routesData: 0,
@@ -70,9 +83,9 @@ async function generateStaticRoutes (staticRender) {
         const generator = {
 
           // Data for currently render route.
-          routeData: generatorData[currentPath],
+          routeData: generatorData[currentPath] || {},
 
-          // Include given "content" into dinbal HTML.
+          // Include given "content" into final HTML.
           include: content => {
             const id = `__%RSB__INCLUDE__${uid()}%__`;
             includes[id] = content;
@@ -85,7 +98,7 @@ async function generateStaticRoutes (staticRender) {
               React.createElement(DataProvider, {
                 staticRoutes: routesData,
                 currentRoute: currentPath,
-                include: content => scriptData.push(content)
+                include: content => scriptData.push(content),
               }, children)
             );
           }
@@ -94,8 +107,8 @@ async function generateStaticRoutes (staticRender) {
         // Create route's absolute path.
         const file = useSingleSlash(
           currentPath === "/"
-            ? `${output}/${basepath || ""}/index.html`
-            : `${output}/${basepath || ""}/${currentPath}/index.html`
+            ? `${output}/${basePath || ""}/index.html`
+            : `${output}/${currentPath}/index.html`
           );
 
         // Get static markup.
@@ -109,6 +122,7 @@ async function generateStaticRoutes (staticRender) {
           includes
         );
 
+        // Get current route data.
         const routeData = scriptData.length
           ? useSingleSlash(
               serialize(
@@ -122,8 +136,12 @@ async function generateStaticRoutes (staticRender) {
           : undefined;
 
         // Create route's index file.
-
-        await createFile(file, addComponentData(html, routeData));
+        await createFile(file,
+          insertIndexScript(
+            addComponentData(html, routeData),
+            basePath ? `/${basePath}/` : `/`,
+           ),
+        );
         stats.renderedFiles += 1;
 
         // Create route's data file.
@@ -138,13 +156,14 @@ async function generateStaticRoutes (staticRender) {
   }
   console.log(`✔ Created ${stats.renderedFiles } files with ${stats.routesData} JSON data objects.`);
   rmdir(`${output}/cache`);
-  console.log(`✔ Cache Cleared`);
+  console.log(`✔ Cache cleared`);
   console.log("★ All Done! ★");
 }
 
 
 // ---- Helpers ----------------
 
+// Create file (base on deep paths).
 function createFile(path, content) {
   return new Promise((resolve, reject) => {
     const directory = path.split("/");
@@ -159,10 +178,24 @@ function createFile(path, content) {
   });
 }
 
+// Inject assets to the final HTML.
 function includeAssets(html, assets) {
   return html.replace(/__%RSB__INCLUDE__.+?%__/g, match => assets[match] || "");
 }
 
+// Inject main index.js to the final HTML.
+function insertIndexScript(html, path) {
+  if (html.includes("</body>")) {
+    return html.replace(
+      "</body>",
+      `<script src="${path}index.js"></script></body>`
+    );
+  } else {
+    return (html += `<script src="${path}index.js"></script>`);
+  }
+}
+
+// Inject data to the final HTML.
 function addComponentData(html, data) {
   if (!data) return html;
   if (html.includes("</head>")) {
@@ -175,6 +208,7 @@ function addComponentData(html, data) {
   }
 }
 
+// Generatr unique IDs.
 function uid() {
   return (+new Date() + Math.random() * 100).toString(32);
 }
@@ -191,12 +225,19 @@ function rmdir(source) {
   fs.rmdirSync(source);
 }
 
+// Normalize paths to contain only one slash separator.
 function useSingleSlash(path) {
   return path.replace(/(\\u002F|\/+)/g, "/");
 }
 
+// Remove trailing slash (to unify paths).
 function noTrailingSlash(path) {
-  return path.length > 1 && /\/$/.test(path) ? path.slice(0, -1) : path;
+  return /.+\/$/.test(path) ? path.slice(0, -1) : path;
+}
+
+// Remove slashes from begin and end of basepath.
+function cutBaseSlashes(basepath) {
+  return basepath ? basepath.replace(/(^\/|\/$)/, "") : "";
 }
 
 // Export.
