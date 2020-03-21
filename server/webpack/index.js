@@ -34,7 +34,7 @@ function webpackConfig(config) {
     // Extract files to await.
     const rsbAwait = webpackConfig.rsbAwait;
     delete webpackConfig.rsbAwait;
- 
+
     // Static configuration.
     const staticConfig = createConfiguration({
       webpackConfig: webpackConfig,
@@ -56,7 +56,7 @@ function webpackConfig(config) {
       },
       plugins: [
         new webpack.DefinePlugin({
-          staticrc: JSON.stringify(staticrc)
+          staticrc: JSON.stringify(Object.assign(staticrc, { mode: "static" }))
         }),
         rsbAwait && rsbAwait.length
           ? new SuspenseBuild(() => rsbAwait.every(file => fs.existsSync(file)), suspenseTimeout)
@@ -82,7 +82,7 @@ function webpackConfig(config) {
       },
       plugins: [
         new webpack.DefinePlugin({
-          staticrc: JSON.stringify(staticrc)
+          staticrc: JSON.stringify(Object.assign(staticrc, { mode: "production" }))
         })
       ]
     });
@@ -92,7 +92,7 @@ function webpackConfig(config) {
       webpackConfig: webpackConfig,
       plugins: [
         new webpack.DefinePlugin({
-          staticrc: JSON.stringify({})
+          staticrc: JSON.stringify({ mode: "development" })
         })
       ]
     });
@@ -108,7 +108,7 @@ function webpackConfig(config) {
 function configFactory(dirname, staticRoutesPath) {
   return ({ webpackConfig, localConfig = {}, fileLoader, plugins }) => {
     let configuration = Object.assign({}, deepCopy(webpackConfig), localConfig);
-  
+
     // Add static configuration
     configuration = deepOverride(configuration, {
       resolve: {
@@ -151,9 +151,9 @@ function setupFileLoader(config, setup) {
   return config;
 }
 
-function getStaticRcConfig() {  
-  try {    
-    const dirname = process.cwd();    
+function getStaticRcConfig() {
+  try {
+    const dirname = process.cwd();
     return {
       dirname: dirname,
       staticrc: JSON.parse(fs.readFileSync(path.join(dirname, ".staticrc")))
@@ -163,7 +163,7 @@ function getStaticRcConfig() {
   }
 }
 
-function cutBaseSlashes(basepath) {  
+function cutBaseSlashes(basepath) {
   return basepath ? basepath.replace(/(^\/|\/$)/, "") : "";
 }
 
